@@ -1,3 +1,4 @@
 [submodule "necpp_src"]
 	path = necpp_src
-	url = https://github.com/tmolteno/necpp.git
+	url = git@github.com:stevenmburns/necpp.git
+	branch = openblas-experiments
