@@ -48,9 +48,12 @@ nec_headers.extend(glob("necpp_src/config.h"))
 _backend = os.environ.get("PYNEC_BACKEND", "atlas").lower()
 _extra_include = []
 _extra_link_dirs = []
-_extra_compile = ["-fPIC"]
+# -fopenmp enables the #pragma omp directives in necpp's matrix-fill code.
+# We always want it on (it's cheap if no pragmas are present), and it's
+# required by the MKL gnu_thread layer anyway.
+_extra_compile = ["-fPIC", "-fopenmp"]
 if _backend == "lapacke":
-    _link_args = ["-lstdc++", "-llapacke", "-lopenblas"]
+    _link_args = ["-lstdc++", "-fopenmp", "-llapacke", "-lopenblas"]
     _defines = [("LAPACKE", "1")]
 elif _backend in ("mkl", "mkl_intel"):
     _mkl_root = os.environ.get("MKLROOT", "/opt/intel/oneapi/mkl/latest")
