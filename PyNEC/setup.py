@@ -44,9 +44,15 @@ nec_headers.extend(glob("necpp_src/config.h"))
 necpp_module = setuptools.Extension(
     "_PyNEC",
     sources=nec_sources,
-    include_dirs=[np.get_include(), "necpp_src/src", "necpp_src/", "necpp_src/win32/"],
+    include_dirs=[
+        np.get_include(),
+        "necpp_src/src",
+        "necpp_src/",
+        "necpp_src/win32/",
+        "/usr/include/x86_64-linux-gnu",
+    ],
     extra_compile_args=["-fPIC"],
-    extra_link_args=["-lstdc++"],
+    extra_link_args=["-lstdc++", "-llapack_atlas", "-llapack", "-lcblas", "-latlas"],
     depends=nec_headers,
     define_macros=[
         ("BUILD_PYTHON", "1"),
