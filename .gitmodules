@@ -1,4 +1,4 @@
 [submodule "necpp_src"]
 	path = necpp_src
 	url = git@github.com:stevenmburns/necpp.git
-	branch = gather-scatter-fill
+	branch = preallocate-source-data
