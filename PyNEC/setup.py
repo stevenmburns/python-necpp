@@ -54,7 +54,7 @@ _extra_link_dirs = []
 _extra_compile = ["-fPIC", "-fopenmp"]
 if _backend == "lapacke":
     _link_args = ["-lstdc++", "-fopenmp", "-llapacke", "-lopenblas"]
-    _defines = [("LAPACKE", "1")]
+    _defines = [("LAPACK", "1"), ("LAPACKE", "1")]
 elif _backend in ("mkl", "mkl_intel"):
     _mkl_root = os.environ.get("MKLROOT", "/opt/intel/oneapi/mkl/latest")
     _extra_include = [f"{_mkl_root}/include"]
@@ -90,7 +90,7 @@ elif _backend in ("mkl", "mkl_intel"):
             "-ldl",
         ]
         _extra_compile.append("-fopenmp")
-    _defines = [("LAPACKE", "1"), ("USE_MKL", "1")]
+    _defines = [("LAPACK", "1"), ("LAPACKE", "1"), ("USE_MKL", "1")]
 else:
     _link_args = ["-lstdc++", "-llapack_atlas", "-llapack", "-lcblas", "-latlas"]
     _defines = []
