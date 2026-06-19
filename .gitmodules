@@ -1,4 +1,4 @@
 [submodule "necpp_src"]
 	path = necpp_src
-	url = git@github.com:stevenmburns/necpp.git
+	url = https://github.com/stevenmburns/necpp.git
 	branch = accelerated
