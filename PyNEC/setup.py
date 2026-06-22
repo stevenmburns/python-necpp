@@ -165,7 +165,10 @@ setuptools.setup(
     include_package_data=True,
     data_files=[("examples", ["example/test_rp.py"])],
     ext_modules=[necpp_module],
-    requires=["numpy"],
+    # install_requires (not the dead distutils `requires`) so the wheel
+    # actually declares its runtime numpy dependency — the SWIG wrapper imports
+    # numpy, so an install without it fails at `import PyNEC`.
+    install_requires=["numpy"],
     py_modules=["PyNEC"],
     license="GPLv2",
     classifiers=[
