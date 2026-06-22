@@ -37,7 +37,14 @@ fi
 # configure time); PyNEC/setup.py turns the LAPACK/LAPACKE code path on via
 # -DLAPACK=1 -DLAPACKE=1 regardless of what config.h records, and selects the
 # BLAS implementation at link time from PYNEC_BACKEND.
-if [ ! -f "$BUILD_NECPP/config.h" ]; then
+#
+# Windows has no autoconf, and necpp_src/src/common.h includes the committed
+# win32/nec2++/config.h there (not the root config.h), so skip autoconf — the
+# build tree already has everything it needs.
+case "$(uname -s)" in
+    MINGW* | MSYS* | CYGWIN*) PYNEC_SKIP_AUTOCONF=1 ;;
+esac
+if [ "${PYNEC_SKIP_AUTOCONF:-0}" != "1" ] && [ ! -f "$BUILD_NECPP/config.h" ]; then
     ( cd "$BUILD_NECPP" && make -f Makefile.git && ./configure --without-lapack )
 fi
 

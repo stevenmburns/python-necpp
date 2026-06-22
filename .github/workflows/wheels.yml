@@ -1,15 +1,15 @@
 name: wheels
 
-# Build redistributable PyNEC wheels for manylinux, linking OpenBLAS from the
-# scipy-openblas32 PyPI wheel (auditwheel vendors libscipy_openblas into each
-# wheel, so they are self-contained — no system BLAS needed at install time).
+# Build redistributable PyNEC wheels for manylinux and Windows, linking OpenBLAS
+# from the scipy-openblas32 PyPI wheel. auditwheel (Linux) / delvewheel (Windows)
+# vendor the OpenBLAS lib into each wheel, so they are self-contained — no system
+# BLAS at install time.
 #
 # The host generates the build prerequisites first (build_prereqs.sh in vendor
-# mode: copy necpp_src into PyNEC/, run autoconf for config.h, run SWIG), so the
-# PyNEC/ tree is self-contained — cibuildwheel only mounts the package dir, so
-# the sibling ../necpp_src would otherwise be invisible in the build container.
-#
-# Windows wheels are a separate follow-up (the autoconf/SWIG/BLAS story differs).
+# mode: copy necpp_src into PyNEC/, generate config.h, run SWIG), so the PyNEC/
+# tree is self-contained — cibuildwheel only mounts the package dir, so the
+# sibling ../necpp_src would otherwise be invisible in the build. Linux runs
+# autoconf for config.h; Windows uses the committed win32/config.h.
 
 on:
   workflow_dispatch:
@@ -18,25 +18,37 @@ on:
       - "PyNEC/setup.py"
       - "PyNEC/pyproject.toml"
       - "PyNEC/build_prereqs.sh"
+      - "PyNEC/msvc_compat.h"
       - ".github/workflows/wheels.yml"
   push:
     tags: ["v*"]
 
 jobs:
   build_wheels:
-    name: wheels manylinux
-    runs-on: ubuntu-latest
+    name: wheels ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
     steps:
       - uses: actions/checkout@v4
         with:
           submodules: recursive   # necpp_src (NEC2++ C++) is a nested submodule
-      - name: Install the autoconf toolchain + SWIG (host codegen)
+      - name: Install the autoconf toolchain + SWIG (Linux)
+        if: runner.os == 'Linux'
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y autoconf automake libtool m4 swig
+      - name: Install SWIG (Windows)
+        if: runner.os == 'Windows'
+        # Windows uses the committed win32/config.h (no autoconf); only SWIG is
+        # needed for codegen. build_prereqs.sh skips autoconf on Windows.
+        run: choco install swig -y --no-progress
       - name: Generate build prerequisites (vendor necpp_src, config.h, SWIG wrapper)
         env:
           PYNEC_VENDOR_NECPP: "1"
+        # bash runs on both runners (Git Bash on windows-latest).
         run: bash PyNEC/build_prereqs.sh
       - name: Build wheels
         uses: pypa/cibuildwheel@v4.1.0
@@ -44,7 +56,7 @@ jobs:
           package-dir: PyNEC
       - uses: actions/upload-artifact@v4
         with:
-          name: wheels-linux
+          name: wheels-${{ matrix.os }}
           path: ./wheelhouse/*.whl
 
   release:

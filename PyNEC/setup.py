@@ -8,6 +8,7 @@ Author Tim Molteno. tim@molteno.net
 
 import distutils.sysconfig
 import os
+import sys
 from glob import glob
 
 import numpy as np
@@ -48,6 +49,9 @@ nec_headers.extend(glob("necpp_src/config.h"))
 _backend = os.environ.get("PYNEC_BACKEND", "atlas").lower()
 _extra_include = []
 _extra_link_dirs = []
+# Linked libraries by name (used by the MSVC path; the GCC paths pass -l<name>
+# through extra_link_args instead).
+_libraries = []
 # -fopenmp enables the #pragma omp directives in necpp's matrix-fill code.
 # We always want it on (it's cheap if no pragmas are present), and it's
 # required by the MKL gnu_thread layer anyway.
@@ -109,20 +113,35 @@ elif _backend in ("openblas_pypi", "scipy_openblas"):
 
     _extra_include = [_ob.get_include_dir()]
     _extra_link_dirs = [_ob.get_lib_dir()]
-    _link_args = [
-        "-lstdc++",
-        "-fopenmp",
-        f"-l{_ob.get_library()}",  # "scipy_openblas"
-        # rpath so a locally-built (non-auditwheel) extension finds the lib;
-        # harmless in a repaired wheel, where the lib is vendored alongside.
-        f"-Wl,-rpath,{_ob.get_lib_dir()}",
-    ]
     _defines = [
         ("LAPACK", "1"),
         ("LAPACKE", "1"),
         ("LAPACKE_zgetrf_work", "scipy_LAPACKE_zgetrf_work"),
         ("LAPACKE_zgetrs_work", "scipy_LAPACKE_zgetrs_work"),
     ]
+    if sys.platform == "win32":
+        # MSVC build. Classic /openmp (OpenMP 2.0) suffices — necpp's omp loops
+        # use signed int indices with no collapse/simd. Force-include
+        # msvc_compat.h to neutralize the GCC-only
+        # __attribute__((tls_model("initial-exec"))) in necpp. /bigobj because
+        # the amalgamated NEC2++ translation units are large. Link
+        # scipy-openblas's import library (scipy_openblas.lib); delvewheel
+        # vendors the DLL into the wheel.
+        _here = os.path.dirname(os.path.abspath(__file__))
+        _extra_include.append(_here)
+        _extra_compile = ["/openmp", "/EHsc", "/bigobj", "/FImsvc_compat.h"]
+        _libraries = [_ob.get_library()]  # scipy_openblas -> scipy_openblas.lib
+        _link_args = []
+    else:
+        _extra_compile = ["-fPIC", "-fopenmp"]
+        _link_args = [
+            "-lstdc++",
+            "-fopenmp",
+            f"-l{_ob.get_library()}",  # "scipy_openblas"
+            # rpath so a locally-built (non-auditwheel) extension finds the lib;
+            # harmless in a repaired wheel, where the lib is vendored alongside.
+            f"-Wl,-rpath,{_ob.get_lib_dir()}",
+        ]
 else:
     _link_args = ["-lstdc++", "-llapack_atlas", "-llapack", "-lcblas", "-latlas"]
     _defines = []
@@ -139,6 +158,7 @@ necpp_module = setuptools.Extension(
         *_extra_include,
     ],
     library_dirs=_extra_link_dirs,
+    libraries=_libraries,
     extra_compile_args=_extra_compile,
     extra_link_args=_link_args,
     depends=nec_headers,
