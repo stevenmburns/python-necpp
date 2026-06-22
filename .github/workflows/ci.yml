@@ -1,0 +1,55 @@
+name: CI
+
+# Build the _PyNEC extension against OpenBLAS (the scipy-openblas32 PyPI wheel,
+# LP64) and run the PyNEC test suite. No system BLAS packages: scipy-openblas32
+# ships the library + headers, and PyNEC/setup.py's openblas_pypi backend links
+# it (remapping the prefixed scipy_LAPACKE_* symbols). The only system deps are
+# the autoconf toolchain that generates necpp_src/config.h.
+
+on:
+  push:
+    branches: [accelerated]
+  pull_request:
+    branches: [accelerated]
+
+jobs:
+  test:
+    name: PyNEC (scipy-openblas32)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          # necpp_src (the NEC2++ C++ source) is a nested submodule.
+          submodules: recursive
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+          cache: pip
+      - name: Install the autoconf toolchain + SWIG
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y autoconf automake libtool m4 swig
+      - name: Install Python build deps
+        run: |
+          python -m pip install --upgrade pip
+          pip install numpy scipy-openblas32 setuptools wheel pytest
+      - name: Generate build prerequisites (config.h, necpp_src symlink, SWIG wrapper)
+        run: bash PyNEC/build_prereqs.sh
+      - name: Build PyNEC against scipy-openblas32
+        working-directory: PyNEC
+        env:
+          PYNEC_BACKEND: openblas_pypi
+        # --no-build-isolation so setup.py sees numpy + scipy_openblas32 from
+        # the job's environment (it imports both at build time).
+        run: pip install --no-build-isolation .
+      - name: Verify _PyNEC links scipy-openblas (not a system BLAS)
+        run: |
+          so=$(python -c "import _PyNEC; print(_PyNEC.__file__)")
+          ldd "$so" | grep -q libscipy_openblas || {
+            echo "ERROR: _PyNEC is not linked against scipy-openblas"; ldd "$so"; exit 1; }
+          echo "OK — _PyNEC links libscipy_openblas:"
+          ldd "$so" | grep -i openblas
+      - name: Run PyNEC test suite
+        # test_multiple_sc_cards.py imports the separate `necpp` C-interface
+        # wrapper (not built here), so it is excluded.
+        run: pytest PyNEC/tests/ --ignore=PyNEC/tests/test_multiple_sc_cards.py -v

@@ -91,6 +91,38 @@ elif _backend in ("mkl", "mkl_intel"):
         ]
         _extra_compile.append("-fopenmp")
     _defines = [("LAPACK", "1"), ("LAPACKE", "1"), ("USE_MKL", "1")]
+elif _backend in ("openblas_pypi", "scipy_openblas"):
+    # OpenBLAS provided by the scipy-openblas32 PyPI wheel (LP64 / 32-bit int,
+    # matching PyNEC's lapack_int = int). This is the redistributable-wheel
+    # backend: the same mechanism works on Linux and Windows, needs no system
+    # BLAS packages, and auditwheel/delvewheel bundle the shipped
+    # libscipy_openblas into the wheel.
+    #
+    # scipy-openblas is built with -DBLAS_SYMBOL_PREFIX=scipy_, so every BLAS /
+    # LAPACKE symbol is prefixed (libscipy_openblas exports scipy_LAPACKE_*).
+    # Its bundled <lapacke.h> declares the prefixed prototypes, so remap the two
+    # LAPACKE entry points matrix_algebra.cpp calls to the prefixed names; the
+    # call sites then resolve to the declared prototypes and the exported
+    # symbols. (zgetrf_work / zgetrs_work are the only LAPACKE symbols PyNEC
+    # uses — see matrix_algebra.cpp lu_decompose_lapack / solve_lapack.)
+    import scipy_openblas32 as _ob
+
+    _extra_include = [_ob.get_include_dir()]
+    _extra_link_dirs = [_ob.get_lib_dir()]
+    _link_args = [
+        "-lstdc++",
+        "-fopenmp",
+        f"-l{_ob.get_library()}",  # "scipy_openblas"
+        # rpath so a locally-built (non-auditwheel) extension finds the lib;
+        # harmless in a repaired wheel, where the lib is vendored alongside.
+        f"-Wl,-rpath,{_ob.get_lib_dir()}",
+    ]
+    _defines = [
+        ("LAPACK", "1"),
+        ("LAPACKE", "1"),
+        ("LAPACKE_zgetrf_work", "scipy_LAPACKE_zgetrf_work"),
+        ("LAPACKE_zgetrs_work", "scipy_LAPACKE_zgetrs_work"),
+    ]
 else:
     _link_args = ["-lstdc++", "-llapack_atlas", "-llapack", "-lcblas", "-latlas"]
     _defines = []
