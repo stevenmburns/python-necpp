@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [tool.cibuildwheel]
 build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
-# 64-bit glibc Linux only (this phase). Skip musllinux (scipy-openblas32 targets
-# glibc), 32-bit, and PyPy.
+# 64-bit Linux + Windows. Skip musllinux (scipy-openblas32 targets glibc),
+# 32-bit, and PyPy.
 skip = "*-musllinux_* *_i686 *-win32 pp*"
 test-requires = "pytest"
 # No pure-Python fallback for _PyNEC, so a non-loading extension fails the
@@ -23,3 +23,13 @@ build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 before-build = "pip install numpy scipy-openblas32 setuptools wheel"
 environment = { PYNEC_BACKEND = "openblas_pypi" }
 repair-wheel-command = "LD_LIBRARY_PATH=$(python -c 'import scipy_openblas32 as o; print(o.get_lib_dir())') auditwheel repair -w {dest_dir} {wheel}"
+
+[tool.cibuildwheel.windows]
+# MSVC build against scipy-openblas32. --no-build-isolation keeps one env so
+# before-build's numpy + scipy-openblas32 are visible to setup.py's openblas_pypi
+# backend. delvewheel vendors scipy_openblas's DLL into the wheel; its DLL ships
+# in the package lib dir, which we hand to delvewheel via --add-path.
+build-frontend = { name = "pip", args = ["--no-build-isolation"] }
+before-build = "pip install numpy scipy-openblas32 delvewheel setuptools wheel"
+environment = { PYNEC_BACKEND = "openblas_pypi" }
+repair-wheel-command = "delvewheel repair --add-path $(python -c 'import scipy_openblas32 as o; print(o.get_lib_dir())') -w {dest_dir} {wheel}"
