@@ -1,3 +1,25 @@
 [build-system]
 requires = ["setuptools", "wheel", "numpy"]
 build-backend = "setuptools.build_meta"
+
+[tool.cibuildwheel]
+build = "cp310-* cp311-* cp312-* cp313-* cp314-*"
+# 64-bit glibc Linux only (this phase). Skip musllinux (scipy-openblas32 targets
+# glibc), 32-bit, and PyPy.
+skip = "*-musllinux_* *_i686 *-win32 pp*"
+test-requires = "pytest"
+# No pure-Python fallback for _PyNEC, so a non-loading extension fails the
+# import here. test_multiple_sc_cards.py needs the separate `necpp` wrapper.
+test-command = "pytest {package}/tests --ignore={package}/tests/test_multiple_sc_cards.py"
+
+[tool.cibuildwheel.linux]
+# Build against OpenBLAS from the scipy-openblas32 wheel. --no-build-isolation
+# keeps one env across the build and the repair: before-build installs numpy +
+# scipy-openblas32 there, setup.py's openblas_pypi backend links libscipy_openblas
+# from it, and the repair command resolves the same lib dir so auditwheel
+# vendors libscipy_openblas into the wheel (its build rpath points at this env,
+# which is gone by repair time, so LD_LIBRARY_PATH must point auditwheel at it).
+build-frontend = { name = "pip", args = ["--no-build-isolation"] }
+before-build = "pip install numpy scipy-openblas32 setuptools wheel"
+environment = { PYNEC_BACKEND = "openblas_pypi" }
+repair-wheel-command = "LD_LIBRARY_PATH=$(python -c 'import scipy_openblas32 as o; print(o.get_lib_dir())') auditwheel repair -w {dest_dir} {wheel}"
