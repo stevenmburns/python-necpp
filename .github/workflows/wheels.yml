@@ -19,6 +19,7 @@ on:
       - "PyNEC/pyproject.toml"
       - "PyNEC/build_prereqs.sh"
       - "PyNEC/msvc_compat.h"
+      - "PyNEC/windows_repair.py"
       - ".github/workflows/wheels.yml"
   push:
     tags: ["v*"]

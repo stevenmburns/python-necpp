@@ -32,4 +32,6 @@ repair-wheel-command = "LD_LIBRARY_PATH=$(python -c 'import scipy_openblas32 as 
 build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 before-build = "pip install numpy scipy-openblas32 delvewheel setuptools wheel"
 environment = { PYNEC_BACKEND = "openblas_pypi" }
-repair-wheel-command = "delvewheel repair --add-path $(python -c 'import scipy_openblas32 as o; print(o.get_lib_dir())') -w {dest_dir} {wheel}"
+# cibuildwheel doesn't evaluate $(...) in repair-wheel-command on Windows, so a
+# small Python wrapper computes the scipy-openblas DLL dir and runs delvewheel.
+repair-wheel-command = "python {package}/windows_repair.py {wheel} {dest_dir}"
