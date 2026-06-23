@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest]
+        os: [ubuntu-latest, windows-latest, macos-14]
     steps:
       - uses: actions/checkout@v4
         with:
@@ -41,6 +41,12 @@ jobs:
         run: |
           sudo apt-get update -qq
           sudo apt-get install -y autoconf automake libtool m4 swig
+      - name: Install the autoconf toolchain + SWIG + libomp (macOS)
+        if: runner.os == 'macOS'
+        # macos-14 is Apple Silicon (arm64). build_prereqs.sh runs autoconf on
+        # non-Windows, so the autotools are needed; libomp supplies the OpenMP
+        # runtime Apple clang lacks (see PyNEC/setup.py's darwin branch).
+        run: brew install autoconf automake libtool swig libomp
       - name: Install SWIG (Windows)
         if: runner.os == 'Windows'
         # Windows uses the committed win32/config.h (no autoconf); only SWIG is

@@ -132,6 +132,26 @@ elif _backend in ("openblas_pypi", "scipy_openblas"):
         _extra_compile = ["/openmp", "/EHsc", "/bigobj", "/FImsvc_compat.h"]
         _libraries = [_ob.get_library()]  # scipy_openblas -> scipy_openblas.lib
         _link_args = []
+    elif sys.platform == "darwin":
+        # macOS (Apple Silicon). Apple clang ships no OpenMP runtime, so use
+        # Homebrew libomp: -Xpreprocessor -fopenmp to honor the #pragma omp
+        # directives, plus libomp's include/lib. LIBOMP_PREFIX is exported by
+        # cibuildwheel (see pyproject [tool.cibuildwheel.macos]); fall back to
+        # the arm64 Homebrew prefix. No -lstdc++: clang links libc++
+        # automatically for C++ sources (-lstdc++ does not exist on macOS).
+        # delocate vendors libscipy_openblas + libomp into the wheel.
+        _libomp = os.environ.get("LIBOMP_PREFIX", "/opt/homebrew/opt/libomp")
+        _extra_include.append(os.path.join(_libomp, "include"))
+        _extra_compile = ["-fPIC", "-Xpreprocessor", "-fopenmp"]
+        _link_args = [
+            f"-L{os.path.join(_libomp, 'lib')}",
+            "-lomp",
+            f"-l{_ob.get_library()}",  # "scipy_openblas"
+            # rpaths so a locally-built (non-delocated) extension finds the libs;
+            # harmless in a repaired wheel, where they are vendored alongside.
+            f"-Wl,-rpath,{_ob.get_lib_dir()}",
+            f"-Wl,-rpath,{os.path.join(_libomp, 'lib')}",
+        ]
     else:
         _extra_compile = ["-fPIC", "-fopenmp"]
         _link_args = [
