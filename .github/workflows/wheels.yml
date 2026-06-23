@@ -45,8 +45,11 @@ jobs:
         if: runner.os == 'macOS'
         # macos-14 is Apple Silicon (arm64). build_prereqs.sh runs autoconf on
         # non-Windows, so the autotools are needed; libomp supplies the OpenMP
-        # runtime Apple clang lacks (see PyNEC/setup.py's darwin branch).
-        run: brew install autoconf automake libtool swig libomp
+        # runtime Apple clang lacks (see PyNEC/setup.py's darwin branch). gcc is
+        # only for its gfortran: necpp's configure.ac probes for a Fortran 77
+        # compiler (a NEC-heritage leftover, unused by the C++ build) and aborts
+        # without one. The Linux runner ships gfortran; macOS does not.
+        run: brew install autoconf automake libtool swig libomp gcc
       - name: Install SWIG (Windows)
         if: runner.os == 'Windows'
         # Windows uses the committed win32/config.h (no autoconf); only SWIG is
