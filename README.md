@@ -1,5 +1,13 @@
 # python-necpp: Antenna simulation in python
 
+> **Fork notice.** This is a modified fork of
+> [tmolteno/python-necpp](https://github.com/tmolteno/python-necpp), adding
+> redistributable cross-platform (manylinux + Windows/MSVC) wheels, an OpenBLAS
+> LAPACK backend, and an OpenMP-parallelised matrix fill. It remains licensed
+> under **GPL-2.0-or-later**. See [`CHANGES.md`](CHANGES.md) for the list of
+> modifications and where to obtain the corresponding source for the published
+> wheels.
+
 This repository contains two wrappers for the [http://github.com/tmolteno/necpp nec2++] antenna simulation package:
 
 * necpp/ contains a wrapper using SWIG of the C interface (Python module name: necpp).
