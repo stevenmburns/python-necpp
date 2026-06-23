@@ -142,7 +142,10 @@ elif _backend in ("openblas_pypi", "scipy_openblas"):
         # delocate vendors libscipy_openblas + libomp into the wheel.
         _libomp = os.environ.get("LIBOMP_PREFIX", "/opt/homebrew/opt/libomp")
         _extra_include.append(os.path.join(_libomp, "include"))
-        _extra_compile = ["-fPIC", "-Xpreprocessor", "-fopenmp"]
+        # -std=c++17: Apple clang defaults to an older C++ standard, so necpp's
+        # `thread_local` (C++11) is rejected without this. The Linux gcc default
+        # is already new enough, hence no -std on that branch.
+        _extra_compile = ["-fPIC", "-std=c++17", "-Xpreprocessor", "-fopenmp"]
         _link_args = [
             f"-L{os.path.join(_libomp, 'lib')}",
             "-lomp",
