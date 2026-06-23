@@ -173,13 +173,17 @@ with open("README.md", "r") as fh:
     long_description = fh.read()
 
 setuptools.setup(
-    name="PyNEC",
+    # Distribution name for the accelerated fork. Kept distinct from upstream
+    # "PyNEC" (owned by tmolteno on PyPI/TestPyPI) so this fork can publish to a
+    # package index. The *import* name is unchanged — `import PyNEC` still works;
+    # only `pip install pynec-accel` differs.
+    name="pynec-accel",
     version="1.7.4",
     author="Tim Molteno",
     author_email="tim@physics.otago.ac.nz",
-    url="http://github.com/tmolteno/python-necpp",
+    url="https://github.com/stevenmburns/python-necpp",
     keywords="nec2 nec2++ antenna electromagnetism radio",
-    description="Python Antenna Simulation Module (nec2++) object-oriented interface",
+    description="PyNEC accelerated fork (OpenBLAS + OpenMP) — nec2++ object-oriented interface",
     long_description=long_description,
     long_description_content_type="text/markdown",
     include_package_data=True,
