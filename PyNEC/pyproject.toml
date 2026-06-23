@@ -35,3 +35,19 @@ environment = { PYNEC_BACKEND = "openblas_pypi" }
 # cibuildwheel doesn't evaluate $(...) in repair-wheel-command on Windows, so a
 # small Python wrapper computes the scipy-openblas DLL dir and runs delvewheel.
 repair-wheel-command = "python {package}/windows_repair.py {wheel} {dest_dir}"
+
+[tool.cibuildwheel.macos]
+# Apple Silicon only, built natively on the macos-14 (arm64) runner. OpenBLAS
+# from scipy-openblas32; OpenMP from Homebrew libomp (Apple clang ships none) —
+# LIBOMP_PREFIX feeds setup.py's darwin branch. --no-build-isolation keeps one
+# env so before-build's deps are visible to the openblas_pypi backend (mirrors
+# Linux). delocate vendors libscipy_openblas + libomp into the wheel; like the
+# Linux auditwheel step it needs the dylib dirs on DYLD_LIBRARY_PATH, since the
+# build rpaths point at the build env. MACOSX_DEPLOYMENT_TARGET=14.0 is honest
+# about the vendored Homebrew libs' minimum OS (can be lowered later with a
+# libomp built for an older target).
+archs = ["arm64"]
+build-frontend = { name = "pip", args = ["--no-build-isolation"] }
+before-build = "pip install numpy scipy-openblas32 delocate setuptools wheel"
+environment = { PYNEC_BACKEND = "openblas_pypi", LIBOMP_PREFIX = "/opt/homebrew/opt/libomp", MACOSX_DEPLOYMENT_TARGET = "14.0" }
+repair-wheel-command = "DYLD_LIBRARY_PATH=$(python -c 'import scipy_openblas32 as o; print(o.get_lib_dir())'):$(brew --prefix libomp)/lib delocate-wheel --require-archs {delocate_archs} -w {dest_dir} -v {wheel}"
