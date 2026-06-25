@@ -50,6 +50,15 @@ Relative to `tmolteno/python-necpp`:
   [`stevenmburns/necpp`](https://github.com/stevenmburns/necpp), a fork of the
   NEC2++ engine that adds OpenMP parallelisation of the NEC2 matrix fill and the
   MSVC build fixes. See that repository for its own change record.
+- **De-vendored the OpenMP runtime (Linux wheels, 1.7.4.post1).** The Linux
+  `auditwheel repair` now passes `--exclude libgomp.so.1`, so the wheel binds the
+  *system* `libgomp.so.1` instead of bundling a private copy with a mangled
+  soname. A bundled second libgomp collides with the system libgomp loaded by
+  other accelerated extensions in the same process (initial-exec static TLS +
+  late `dlopen` exhausts glibc's static-TLS surplus), which made co-loaded
+  extensions silently fall back to slower code paths. The wheel now requires a
+  system libgomp at runtime (universally present on glibc Linux — it is the GCC
+  OpenMP runtime). OpenBLAS and libgfortran remain vendored.
 
 These changes do not alter the license: the modified work as a whole remains
 under GPL-2.0-or-later, and the original copyright notices are retained.

@@ -19,10 +19,27 @@ test-command = "pytest {package}/tests --ignore={package}/tests/test_multiple_sc
 # from it, and the repair command resolves the same lib dir so auditwheel
 # vendors libscipy_openblas into the wheel (its build rpath points at this env,
 # which is gone by repair time, so LD_LIBRARY_PATH must point auditwheel at it).
+#
+# --exclude libgomp.so.1: do NOT vendor the OpenMP runtime. _PyNEC links libgomp
+# for its OpenMP loops; auditwheel would otherwise bundle a private copy with a
+# mangled soname (libgomp-<hash>.so.1.0.0). That second libgomp collides with
+# the system libgomp used by other accelerated extensions in the same process
+# (e.g. momwire._accelerators): both use initial-exec (static) TLS and are
+# dlopen'd late, and glibc's static-TLS surplus only fits one — whichever loads
+# second hits "cannot allocate memory in static TLS block". momwire then silently
+# falls back to its slow pure-Python path. Binding the *system* libgomp.so.1
+# (the same one momwire needs) means a single shared instance, so both
+# extensions coexist. Trade-off: the wheel now needs a system libgomp at runtime
+# — universally present on glibc Linux (it is the GCC OpenMP runtime). OpenBLAS
+# and libgfortran stay vendored; only the OpenMP runtime de-vendors.
 build-frontend = { name = "pip", args = ["--no-build-isolation"] }
 before-build = "pip install numpy scipy-openblas32 setuptools wheel"
 environment = { PYNEC_BACKEND = "openblas_pypi" }
-repair-wheel-command = "LD_LIBRARY_PATH=$(python -c 'import scipy_openblas32 as o; print(o.get_lib_dir())') auditwheel repair -w {dest_dir} {wheel}"
+repair-wheel-command = "LD_LIBRARY_PATH=$(python -c 'import scipy_openblas32 as o; print(o.get_lib_dir())') auditwheel repair --exclude libgomp.so.1 -w {dest_dir} {wheel}"
+# Linux-only: run the suite, then assert the wheel actually shares the system
+# libgomp (no bundled copy). Guards against the --exclude above silently
+# becoming a no-op and re-introducing the static-TLS collision.
+test-command = "pytest {package}/tests --ignore={package}/tests/test_multiple_sc_cards.py && python {package}/tests/verify_shared_libgomp.py"
 
 [tool.cibuildwheel.windows]
 # MSVC build against scipy-openblas32. --no-build-isolation keeps one env so
