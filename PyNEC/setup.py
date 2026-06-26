@@ -201,12 +201,15 @@ setuptools.setup(
     # package index. The *import* name is unchanged — `import PyNEC` still works;
     # only `pip install pynec-accel` differs.
     name="pynec-accel",
-    # post1: identical NEC2++/wrapper source as 1.7.4; the wheel build changed
-    # only to stop vendoring libgomp (see PyNEC/pyproject.toml linux repair). A
-    # post-release is the right PEP 440 bump for a same-source repackage, and it
-    # is needed because TestPyPI publish uses skip-existing — 1.7.4 already
-    # exists there, so a new version string is required to actually ship.
-    version="1.7.4.post1",
+    # postN: identical NEC2++/wrapper source as 1.7.4; only the wheel build
+    # changes. A post-release is the right PEP 440 bump for a same-source
+    # repackage, and a new string is required to ship because TestPyPI publish
+    # uses skip-existing (the prior version already exists there).
+    #   post1: stop vendoring libgomp on Linux (static-TLS collision).
+    #   post2: stop vendoring libomp on macOS (delocate --exclude libomp) so it
+    #          shares one OpenMP runtime with momwire — fixes OMP Error #15 /
+    #          deadlock on cross-engine runs. Needs `brew install libomp`.
+    version="1.7.4.post2",
     author="Tim Molteno",
     author_email="tim@physics.otago.ac.nz",
     url="https://github.com/stevenmburns/python-necpp",
