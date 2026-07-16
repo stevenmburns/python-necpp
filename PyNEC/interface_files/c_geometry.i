@@ -1,7 +1,21 @@
 class c_geometry
 {
 public:
-          
+
+  /*! Enable or disable the wire/segment intersection checks.
+
+    On by default. wire() and geometry_complete() reject a deck whose wires
+    pass within a radius-sum of one another (a mid-segment crossing, or a
+    segment midpoint landing on a neighbouring wire). NEC-2 / nec2c do not
+    perform this test, so real decks with closely-spaced, touching, or
+    crossing wires (car-body grids, collinear feed stubs, dense airframe
+    meshes) trip a fatal false positive on geometry NEC-2 solves fine. Call
+    with false before geometry_complete() to restore NEC-2's permissiveness.
+
+      \param enable True (default) to check, false to skip.
+  */
+  void set_intersection_check(bool enable);
+
   /*! Add a wire to the geometry,
 
   All coordinates are in meters.

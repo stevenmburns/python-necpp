@@ -60,5 +60,17 @@ Relative to `tmolteno/python-necpp`:
   system libgomp at runtime (universally present on glibc Linux — it is the GCC
   OpenMP runtime). OpenBLAS and libgfortran remain vendored.
 
+- **Optional wire-intersection check (1.7.5).** Wrapped the new
+  `c_geometry::set_intersection_check(bool)` knob (added in the `stevenmburns/necpp`
+  engine fork) into the Python interface (`PyNEC/interface_files/c_geometry.i`).
+  NEC2++ fatally rejects a deck whose wires pass within a radius-sum of one
+  another — a mid-segment crossing, or a segment midpoint landing on a
+  neighbouring wire — a validation the NEC-2 kernel and `nec2c` do not perform.
+  Real decks with closely-spaced, touching, or crossing wires (car-body grids,
+  collinear feed stubs, dense airframe meshes) therefore raised on geometry NEC-2
+  solves fine. Call `geometry.set_intersection_check(False)` before
+  `geometry_complete()` to restore that permissiveness. Default is unchanged
+  (check enabled).
+
 These changes do not alter the license: the modified work as a whole remains
 under GPL-2.0-or-later, and the original copyright notices are retained.
