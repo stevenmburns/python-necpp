@@ -201,15 +201,19 @@ setuptools.setup(
     # package index. The *import* name is unchanged — `import PyNEC` still works;
     # only `pip install pynec-accel` differs.
     name="pynec-accel",
-    # postN: identical NEC2++/wrapper source as 1.7.4; only the wheel build
-    # changes. A post-release is the right PEP 440 bump for a same-source
-    # repackage, and a new string is required to ship because TestPyPI publish
-    # uses skip-existing (the prior version already exists there).
+    # 1.7.4.postN were same-source repackages of upstream 1.7.4 — only the wheel
+    # build changed:
     #   post1: stop vendoring libgomp on Linux (static-TLS collision).
     #   post2: stop vendoring libomp on macOS (delocate --exclude libomp) so it
     #          shares one OpenMP runtime with momwire — fixes OMP Error #15 /
     #          deadlock on cross-engine runs. Needs `brew install libomp`.
-    version="1.7.4.post2",
+    # 1.7.5 is the first fork release that changes the NEC2++/wrapper *source*:
+    # c_geometry gains a public set_intersection_check(bool) knob (wrapped for
+    # Python) so callers can disable the fatal wire/segment intersection
+    # validator and match NEC-2 / nec2c permissiveness on closely-spaced /
+    # crossing wires. A minor bump, not a post-release, because it adds public
+    # API.
+    version="1.7.5",
     author="Tim Molteno",
     author_email="tim@physics.otago.ac.nz",
     url="https://github.com/stevenmburns/python-necpp",
