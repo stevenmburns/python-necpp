@@ -72,5 +72,16 @@ Relative to `tmolteno/python-necpp`:
   `geometry_complete()` to restore that permissiveness. Default is unchanged
   (check enabled).
 
+- **Sommerfeld gn 2 near-ground fix (1.7.6).** Picked up the engine fix for
+  the `c_ggrid::interpolate()` (NEC-2 INTRP) control-flow inversion
+  (`stevenmburns/necpp#5`): downward grid-region crossings extrapolated stale
+  cubic-interpolation coefficients outside their valid cell, corrupting gn 2
+  Sommerfeld solves for conductors near the ground that don't touch it, and a
+  thread's cache could survive into later solves (order-dependent results).
+  The cache now self-invalidates via a per-grid generation stamp. Fixes
+  `stevenmburns/python-necpp#15` (antennaknobs#448): near-ground gn 2 decks
+  now match nec2c/nec2dxs/momwire to 4 digits, and repeat solves in one
+  process are bit-identical.
+
 These changes do not alter the license: the modified work as a whole remains
 under GPL-2.0-or-later, and the original copyright notices are retained.
