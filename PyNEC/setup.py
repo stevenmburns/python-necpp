@@ -213,7 +213,7 @@ setuptools.setup(
     # validator and match NEC-2 / nec2c permissiveness on closely-spaced /
     # crossing wires. A minor bump, not a post-release, because it adds public
     # API.
-    version="1.7.5",
+    version="1.7.6",
     author="Tim Molteno",
     author_email="tim@physics.otago.ac.nz",
     url="https://github.com/stevenmburns/python-necpp",
