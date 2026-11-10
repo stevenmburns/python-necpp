@@ -83,5 +83,17 @@ Relative to `tmolteno/python-necpp`:
   now match nec2c/nec2dxs/momwire to 4 digits, and repeat solves in one
   process are bit-identical.
 
+- **Fill-pair reuse, opt-in (1.7.7).** Picked up the engine's fill-pair reuse
+  (`stevenmburns/necpp#6`): the wire-wire matrix fill is evaluated once per
+  congruence class of segment pairs and scattered to every member, in free
+  space and over perfect, GN 0 and Sommerfeld GN 2 grounds. It is **off by
+  default**. Enable it with the `PYNEC_FILL_REUSE=1` environment variable, or
+  per context with the newly wrapped `nec_context.set_fill_reuse(mode)` (-1
+  follows the env var, 0 off, 1 on). `get_fill_reuse_classes()` reports the
+  classes the last fill used, or -1 if reuse was off. With reuse off, results
+  are bit-identical to 1.7.6. On a 4,392-segment wire grid the fill drops
+  3.5x (4.66 to 1.34 s at 8 threads), and |dZ| is 5e-12. The engine also
+  zeroes its radiation-pattern arrays before use.
+
 These changes do not alter the license: the modified work as a whole remains
 under GPL-2.0-or-later, and the original copyright notices are retained.
