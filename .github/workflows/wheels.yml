@@ -31,7 +31,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-14]
+        os: [ubuntu-latest, windows-latest, macos-15]  # macos-14 image retired by GitHub (2026-11)
     steps:
       - uses: actions/checkout@v4
         with:
@@ -43,7 +43,7 @@ jobs:
           sudo apt-get install -y autoconf automake libtool m4 swig
       - name: Install the autoconf toolchain + SWIG + libomp (macOS)
         if: runner.os == 'macOS'
-        # macos-14 is Apple Silicon (arm64). build_prereqs.sh runs autoconf on
+        # macos-15 is Apple Silicon (arm64). build_prereqs.sh runs autoconf on
         # non-Windows, so the autotools are needed; libomp supplies the OpenMP
         # runtime Apple clang lacks (see PyNEC/setup.py's darwin branch). No
         # Fortran compiler is needed: necpp's configure.ac dropped its vestigial
