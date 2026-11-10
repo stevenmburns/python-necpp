@@ -558,6 +558,12 @@ public:
                   ekflag = 0 : initiates use of the extended thin-wire kernel.
   */
   void set_extended_thin_wire_kernel(bool ekflag);
+
+  /*! Fill-pair reuse: -1 follow PYNEC_FILL_REUSE (default), 0 off, 1 on. */
+  void set_fill_reuse(int mode);
+
+  /*! Classes used by the last fill, or -1 when it did not use reuse. */
+  long long get_fill_reuse_classes() const;
   
   
   
