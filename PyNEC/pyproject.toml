@@ -54,7 +54,7 @@ environment = { PYNEC_BACKEND = "openblas_pypi" }
 repair-wheel-command = "python {package}/windows_repair.py {wheel} {dest_dir}"
 
 [tool.cibuildwheel.macos]
-# Apple Silicon only, built natively on the macos-14 (arm64) runner. OpenBLAS
+# Apple Silicon only, built natively on the macos-15 (arm64) runner. OpenBLAS
 # from scipy-openblas32; OpenMP from Homebrew libomp (Apple clang ships none) —
 # LIBOMP_PREFIX feeds setup.py's darwin branch. --no-build-isolation keeps one
 # env so before-build's deps are visible to the openblas_pypi backend (mirrors
